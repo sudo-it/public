@@ -2,11 +2,11 @@
 
 #------------------------------------------------------------------------------#
 #
-# xxx-20180707
+# SI-20180707
 #
-# file: bash-script-template.sh
+# file: bash-script-template-1.0.el7.x86_64.sh
 #
-# usage: bash-script-template.sh
+# usage: bash-script-template-1.0.el7.x86_64.sh
 #
 # description: general bash script template
 #
