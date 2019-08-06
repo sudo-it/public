@@ -454,7 +454,6 @@ main() {
 
    printf "\n### INSTALLATION MENU ###\n\n"
 
-   printf "\n"
    printf "1 - New installation (complete)\n"
    printf "2 - Reconfigure existing installation (leave previously generated certificates alone)\n"
    printf "3 - Generate new certificates (and create new client archive)\n\n"
