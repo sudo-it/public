@@ -184,11 +184,11 @@ create_openvpn_certs() {
    tar cpzf "${script_bkp_file}" \
       "${easyrsa_base_dir}" \
       "${openvpn_base_dir}" \
-      "${os_conf_dir}"
+      "${os_conf_dir}" > /dev/null 2>&1
 
    printf "\n\n"
 
-   printf "Creating certificates (should take around 20 minutes)...\n\n"
+   printf "Creating certificates...\n\n"
 
    # remove and re-initialize the PKI directory
    printf "Removing any existing certificates at: ${easyrsa_pki_dir}"
