@@ -47,6 +47,8 @@ client_config_file="${client_dirpath}/openvpn-client.ovpn"
 
 request_config_info() {
 
+   printf "\n### CONFIGURATION MENU ###\n\n"
+
    printf "\n"
 
    # request input from user and set defaults if no input provided
@@ -54,7 +56,7 @@ request_config_info() {
    if [ -z "${VPN_NET}" ]; then VPN_NET="10.0.1.0 255.255.255.0"; fi
 
    # set default vpn dns address
-   DEFAULT_VPN_DNS="${VPN_NET%.* *}.1"
+   DEFAULT_VPN_DNS="1.1.1.1"
 
    sleep 1; read -p "Enter VPN client DNS address (default: ${DEFAULT_VPN_DNS}): " VPN_DNS
    if [ -z "${VPN_DNS}" ]; then VPN_DNS="${DEFAULT_VPN_DNS}"; fi
@@ -174,12 +176,13 @@ create_openvpn_certs() {
 
    printf "Creating certificates (should take around 20 minutes)..."
    # remove and re-initialize the PKI directory
-   easyrsa --batch init-pki
+   easyrsa init-pki
 
    printf "\n\n"
  
    # generate DH parameters
-   easyrsa --batch gen-dh
+   # batch option removed for log verbosity
+   easyrsa gen-dh
  
    printf "\n\n"
 
@@ -434,6 +437,8 @@ main() {
 
    #create required script directory
    mkdir -p "${up_auth_script_dir}"
+
+   printf "\n### INSTALLATION MENU ###\n\n"
 
    printf "\n"
    printf "1 - New installation (complete)\n"
