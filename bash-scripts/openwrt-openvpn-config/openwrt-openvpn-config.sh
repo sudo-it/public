@@ -25,7 +25,7 @@
 
 #-- VARIABLES ------------------------------------------------------------------
 
-script_start_ts="$(date)"
+script_start_ts="$(date +"%Y-%m-%d %H:%M:%S")"
 script_start_ts_fmt="$(date --date "${script_start_ts}" +%Y%m%d-%H%M%S)"
 script_log_dir="/root/${0%.*}-log"
 script_log_file="${script_log_dir}/${0%.*}-${script_start_ts_fmt}.log"
@@ -499,7 +499,7 @@ main() {
 
    printf "### SCRIPT COMPLETED ###\n\n"
    printf "SCRIPT START TIME: ${script_start_ts}\n"
-   printf "SCRIPT END TIME: $(date)\n\n"
+   printf "SCRIPT END TIME: $(date +"%Y-%m-%d %H:%M:%S")\n\n"
    printf "SCRIPT LOGFILE: ${script_log_file}\n\n"
 
    #write system info to log file without terminal display
