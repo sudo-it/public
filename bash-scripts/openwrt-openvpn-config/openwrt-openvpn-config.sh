@@ -307,9 +307,6 @@ configure_openvpn_up_auth() {
 
    printf "### CONFIGURE OPENVPN SERVER USER/PASSWORD AUTH ###\n\n"
 
-   #create required script directory
-   mkdir -p "${up_auth_script_dir}"
-
    printf "Creating user/password authentication script file...\n\n"
    # create script file (indentation removed for proper script formatting)
    printf "%s\n" '#!/bin/ash
@@ -517,6 +514,9 @@ main() {
 
 # create required script log directory
 mkdir -p "${script_log_dir}"
+
+#create required openvpn user/pass script directory
+mkdir -p "${up_auth_script_dir}"
 
 # execute main function and log output to file
 main | tee "${script_log_file}"
