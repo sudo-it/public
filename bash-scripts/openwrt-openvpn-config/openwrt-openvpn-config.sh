@@ -35,8 +35,8 @@ easyrsa_req_cn="vpnca"
 easyrsa_base_dir="/etc/easy-rsa"
 easyrsa_pki_dir="${easyrsa_base_dir}/pki"
 
-EASYRSA_PKI="${easyrsa_pki_dir}" #env variable required by easyrsa
-EASYRSA_REQ_CN="${easyrsa_req_cn}" #env variable required by easyrsa
+export EASYRSA_PKI="${easyrsa_pki_dir}" #env variable required by easyrsa
+export EASYRSA_REQ_CN="${easyrsa_req_cn}" #env variable required by easyrsa
 
 
 openvpn_base_dir="/etc/openvpn"
