@@ -35,6 +35,10 @@ easyrsa_req_cn="vpnca"
 easyrsa_base_dir="/etc/easy-rsa"
 easyrsa_pki_dir="${easyrsa_base_dir}/pki"
 
+EASYRSA_PKI="${easyrsa_pki_dir}" #env variable required by easyrsa
+EASYRSA_REQ_CN="${easyrsa_req_cn}" #env variable required by easyrsa
+
+
 openvpn_base_dir="/etc/openvpn"
 openvpn_status_log="/tmp/openvpn-status.log"
 
@@ -311,59 +315,41 @@ configure_openvpn_up_auth() {
    # create script file (indentation removed for proper script formatting)
    printf "%s\n" '#!/bin/ash
 # description: provides username/password authentication for openvpn
-
 # script parent directory
 script_dir="$(dirname ${0})"
-
 # script file name
 script_file="$(basename ${0})"
-
 # script file name with trailing extension removed
 script_file_noext="${script_file%.*}"
-
 # script config file name
 conf_file="${script_dir}/${script_file_noext}.conf"
-
 # script log file name
 log_file="/tmp/${script_file_noext}.log"
-
 # note: openvpn "auth-user-pass-verify" server directive with "via-file" option \
 # provides user/pass in 2-line plain text file format, where line 1 is \
 # username and line 2 is password.
-
 # capture username from script input
 input_user="$(head -1 ${1})"
-
 # capture password from script input and hash the value
 input_pass="$(printf $(tail -1 ${1}) | sha256sum | cut -d " " -f 1)"
-
 # capture username from conf file
 conf_user="$(head -1 ${conf_file})"
-
 # capture password hash from conf file
 conf_pass="$(tail -1 ${conf_file})"
-
 printf "\nDate: $(date)\n" | tee -a ${log_file}
 printf "Username: ${input_user}\n\n" | tee -a ${log_file}
-
 # if username incorrect, exit with failure
 if [ "${input_user}" != "${conf_user}" ]; then
-
    printf "ERROR: Incorrect username. Access denied!\n\n" | tee -a ${log_file}
    exit 1
-
 # username verified, if password incorrect, exit with failure
 elif [ "${input_pass}" != "${conf_pass}" ]; then
-
    printf "ERROR: Incorrect password. Access denied!\n\n" | tee -a ${log_file}
    exit 1
-
 # username and password verified; exit with success
 else
-
    printf "SUCCESS: Correct username and password. Access granted.\n\n" | tee -a ${log_file}
    exit 0
-
 fi
 ' > "${up_auth_script_file}"
 
