@@ -504,7 +504,7 @@ main() {
 
    #write system info to log file without terminal display
    printf "### SYSTEM INFO ###\n\n" >> ${script_log_file}
-   uname -a >>  ${script_log_file}
+   uname -a >> ${script_log_file}
    printf "\n" >> ${script_log_file}
    cat /etc/os-release >> ${script_log_file}
    printf "\n" >> ${script_log_file}
