@@ -1,0 +1,338 @@
+#20190728 - SIT
+
+
+The intent of the 'openwrt-openvpn-config.sh' script is to ease the process of establishing an OpenVPN server on OpenWRT.
+
+To be clear, execution of this script will result in a routed OpenVPN server running on an OpenWRT router for purpose 
+of remotely accessing from the Internet (external side), via encrypted tunnel, the network behind the OpenVPN server/router (internal/LAN side).
+
+At time of script creation, OpenWRT's implementation of OpenVPN provides no mechanism of VPN security other than
+PKI certificate.  I wanted to use two-factor authentication, establishing both PKI certificate validation as well
+as user/password authentication.  
+
+This script makes use of the 'auth-user-pass-verify' server directive and a custom 'openwrt-openvpn-up-auth.sh' script
+to provide user/password authentication on top of PKI certificate validation.  Find additional information on this topic in
+'Additional notes' section of readme file.
+
+This script was written for a Linux audience and assumes at least basic networking knowledge. If using Windows, some tailoring will be required.
+Specific instructions for Linksys WRT3200ACM are included.  Skip these sections if using an alternate router type, though similar configuration
+will be required on any substitute device.
+
+
+### Instructions for installation of OpenWRT on Linksys WRT3200ACM ###
+
+
+   * Requires PC connected via network cable to LAN/Ethernet port of router with functional Internet access:
+
+   - Browse for and download latest device firmware at openwrt.org and verify sha256 checksum
+
+        https://openwrt.org/toh/views/toh_fwdownload
+
+        search page or filter by model for 'wrt3200acm'
+
+        you will want the file linked to by the 'Firmware OpenWrt Install URL'
+
+        example (current at time of documentation):
+
+           http://downloads.openwrt.org/releases/18.06.4/targets/mvebu/cortexa9/openwrt-18.06.4-mvebu-cortexa9-linksys-wrt3200acm-squashfs-factory.img
+           http://downloads.openwrt.org/releases/18.06.4/targets/mvebu/cortexa9/sha256sums
+
+           720ddbcd9ab479dd7fc69938e0ea56528fdc325679fca9a5dadab78eff7762dc *openwrt-18.06.4-mvebu-cortexa9-linksys-wrt3200acm-squashfs-factory.img
+
+           [user1@localhost wrt3200acm-openwrt-firmware]$ sha256sum openwrt-18.06.4-mvebu-cortexa9-linksys-wrt3200acm-squashfs-factory.img 
+           720ddbcd9ab479dd7fc69938e0ea56528fdc325679fca9a5dadab78eff7762dc  openwrt-18.06.4-mvebu-cortexa9-linksys-wrt3200acm-squashfs-factory.img
+
+   - From within the Linksys WRT3200ACM web admin interface (firmware version 1.0.6.186168 at time of documentation), navigate to:
+
+        connectivity -> basic -> router firmware update -> manual
+
+        choose file: openwrt-18.06.4-mvebu-cortexa9-linksys-wrt3200acm-squashfs-factory.img
+
+        click start and 'yes' to begin firmware update
+
+        after router reboots, re-establish connection to http://192.168.1.1
+
+
+### Instructions for initial configuration of OpenWRT (required for proper execution of 'openwrt-openvpn-config.sh' script) ###
+
+
+   * Requires PC connected via network cable to LAN/Ethernet port of router with functional Internet access:
+
+   - Establish connection to http://192.168.1.1 (factory default IP address)
+
+   - Set password and ssh access:
+
+        select 'Login' to login with blank password
+
+        select 'Go to password configuration' at top of screen
+
+        enter password and password confirmation
+
+        under "SSH Access / Dropbear Instance:
+
+           set 'Interface' to: 'lan'
+           * this is optional configuration, but would recommend it unless you need ssh access from Internet/WAN ports
+           * this setting can be modified any time via 'system -> administration'
+           
+        select 'save and apply'
+
+        select 'logout' to return to login prompt and verify password working
+
+   - *Optional* Customize LAN network interface:
+
+        navigate to: network -> interfaces -> lan -> edit
+
+        configure lan settings as desired, example:
+        
+           IPv4 address: 10.0.0.1
+           IPv4 netmask: 255.255.255.0
+           
+        click save and apply, then wait for first 30s countdown to expire, and click 'apply unchecked'
+        * found this to be a bit quirky - might require some tinkering
+          example: disconnect and reconnect lan cable during countdown and/or restart router
+        * if tire of this, a simpler method might be to:
+             ssh root@192.168.1.1
+             vim /etc/config/network #change IP found under section labeled "config interface 'lan'"
+             reboot
+
+   - *Optional* Customize WAN network interface:
+
+        Default WAN configuration sets the WAN interface to DHCP. You'll likely want to change this to static,
+        or at least ensure a static reservation on the providing DHCP server, and/or configure DDNS. DDNS
+        configuration is outside the scope of this script and documentation.
+
+        To switch from DHCP to static address, navigate to:
+
+            network -> interfaces -> wan -> edit
+
+            change 'protocol' to 'static address'
+
+            select 'switch protocol'
+
+            enter desired IPv4 address, netmask and gateway
+
+            select 'save and apply'
+
+   - *Optional* Configure custom DNS servers:
+
+        If WAN port is configured for DHCP, navigate to:
+
+           network -> interfaces -> wan -> edit -> advanced settings
+
+           deselect 'Use DNS servers advertised by peer'
+
+           set custom DNS servers, example:
+
+              1.1.1.1 (cloudflare primary)
+              1.0.0.1 (cloudflare secondary)
+              208.67.222.222 (opendns primary)
+              208.67.220.220 (opendns secondary)
+
+           select 'save and apply'
+
+        If WAN port is configured for static address:
+
+           network -> interfaces -> wan -> edit -> general setup
+
+           set custom DNS servers, example:
+
+              1.1.1.1 (cloudflare primary)
+              1.0.0.1 (cloudflare secondary)
+              208.67.222.222 (opendns primary)
+              208.67.220.220 (opendns secondary)
+
+           select 'save and apply'
+
+
+### Verify proper basic network operation ###
+
+   
+   * Required for execution of 'openwrt-openvpn-config.sh' script 
+
+   - Connect via ssh to OpenWRT router:
+
+        Use putty or another ssh client to establish ssh connection, example:
+ 
+           ssh root@10.0.0.1
+
+   - Verify DNS operation and Internet connectivity:   
+
+           root@OpenWrt:~# nslookup openwrt.org
+
+               Server:		127.0.0.1
+               Address:		127.0.0.1#53
+
+               Name:		openwrt.org
+               Address 1:	139.59.209.225
+               Address 2:	2a03:b0c0:3:d0::1af1:1
+
+           root@OpenWrt:~# ping -c4 openwrt.org
+
+               PING openwrt.org (139.59.209.225): 56 data bytes
+               64 bytes from 139.59.209.225: seq=0 ttl=50 time=93.264 ms
+               64 bytes from 139.59.209.225: seq=1 ttl=50 time=93.214 ms
+               64 bytes from 139.59.209.225: seq=2 ttl=50 time=93.242 ms
+               64 bytes from 139.59.209.225: seq=3 ttl=50 time=93.263 ms
+
+               --- openwrt.org ping statistics ---
+               4 packets transmitted, 4 packets received, 0% packet loss
+               round-trip min/avg/max = 93.214/93.245/93.264 ms
+
+      *** if these tests fail, revisit your network and DNS settings as something is not correct ***
+
+
+### Download and execute 'openwrt-openvpn-config.sh' script ###
+
+
+   * Requires basic DNS and Internet functionality
+
+   - From an active ssh session, execute following command to enable wget ssl support
+
+        root@OpenWrt:~# opkg update; opkg install libustream-openssl ca-bundle ca-certificates
+
+   - Use wget to download 'openwrt-openvpn-config.sh' script
+
+        root@OpenWrt:~# wget https://raw.githubusercontent.com/sudo-it/code/master/bash-scripts/openwrt-openvpn-config/openwrt-openvpn-config.sh
+
+   - Set execute permissions on script
+
+        root@OpenWrt:~# chmod 500 openwrt-openvpn-config.sh 
+
+   - Execute script
+
+        root@OpenWrt:~# ./openwrt-openvpn-config.sh
+
+
+### Explanation of 'openwrt-openvpn-config.sh' script installation menu prompts ###
+
+
+   1 - New installation (complete)
+
+          # Fresh installation.  Installs required packages, creates new certificates,
+          # creates new server and client configuration files, overwrites any existing
+          # certificates and configuration files.
+
+   2 - Reconfigure existing installation (leave previously generated certificates alone)
+
+          # Leaves existing certificates in place, but overwrites existing server and client
+          # configuration files.
+
+   3 - Generate new certificates (and create new client archive)
+
+          # Leaves existing server and client configurations untouched, overwrites certificates
+          # and creates new client archive (containing new client certificates).
+
+
+### Explanation of 'openwrt-openvpn-config.sh' script configuration menu prompts ###
+
+
+   Enter VPN client network (default: 10.0.1.0 255.255.255.0):
+
+      # This is the network address and subnet mask of the network you wish to use
+      # for connected VPN clients.  This network must differ from your internal network.
+      # The first usable IP will be assigned to the router interface. Ensure you follow
+      # the default example and enter network address and subnet mask separated with a single
+      # space. Blank entry accepts default.
+
+   Enter VPN client DNS address (default: 1.1.1.1): 
+
+      # This is a DNS address to be used by VPN clients.  It is pushed as a DHCP option,
+      # and will possibly be ignored and/or unnecessary if the OS of VPN client is already
+      # configured to use DNS.  It defaults to '1.1.1.1' (cloudflare primary).
+      # Blank entry accepts default.
+      
+   Enter VPN WAN IP address (default: 192.168.1.2): 
+
+      # This is the external/Internet/WAN IP address of the router.  The default is derived by
+      # querying the IP of the eth1.2 interface ('Internet' interface).  With Internet interface
+      # configured in advance via DHCP or static -- static definitely advised -- the default 
+      # detected IP should be correct. Blank entry accepts default.
+
+   Enter VPN WAN port (default: 1194):
+
+      # Port on which OpenVPN server will listen for connections.
+      # Blank entry accepts default.
+
+   Enter desired username (default: user1):
+
+      # Username to be used by connecting VPN client.
+      # Blank entry accepts default.
+
+   Enter desired password (default: password):
+
+      # Password to be used by connecting VPN client.
+      # Blank entry accepts default.
+
+
+### Client access instructions ###
+
+
+   * Requires OpenVPN installation on client device
+
+   - Upon completion of 'openwrt-openvpn-config.sh' script, a client file archive will be found at:
+
+      /etc/openvpn/openvpn-client.tgz
+
+   - Copy this file via secure method (e.g. scp or USB flash drive transfer) to the VPN client device
+
+   - Extract the client archive file:
+
+      tar xpzf openvpn-client.tgz
+
+   - Change directory to the newly created directory
+
+      cd openvpn-client
+
+   - Execute openvpn with root priveleges, using openvpn-client.ovpn as argument
+
+      openvpn openvpn-client.ovpn
+
+
+### Additional notes ###
+
+
+   - To revert from OpenVPN to stock Linksys WRT3200ACM firmware:
+
+      Download Linksys firmware to router:
+
+         root@OpenWrt:~# wget http://downloads.linksys.com/downloads/firmware/FW_WRT3200ACM_1.0.6.186168_prod.img
+         Downloading 'http://downloads.linksys.com/downloads/firmware/FW_WRT3200ACM_1.0.6.186168_prod.img'
+         Connecting to 52.216.136.251:80
+         Writing to 'FW_WRT3200ACM_1.0.6.186168_prod.img'
+         FW_WRT3200ACM_1.0.6. 100% |*******************************| 41472k  0:00:00 ETA
+         Download completed (42467584 bytes)
+
+
+         root@OpenWrt:~# sysupgrade -F -n /tmp/FW_WRT3200ACM_1.0.6.186168_prod.img 
+         Image metadata not found
+         Image check 'fwtool_check_image' failed but --force given - will update anyway!
+         Commencing upgrade. Closing all shell sessions.
+         Connection to 10.0.0.1 closed by remote host.
+         Connection to 10.0.0.1 closed.
+
+   - To restore OpenWRT factory defaults (erasing any/all non-stock files and configurations)
+
+      root@OpenWrt:~# firstboot; reboot
+
+   - The 'openwrt-openvpn-up-auth.sh' script works as follows (assuming no modifications made):
+
+      1. A selected username is written to '/etc/openvpn/scripts/openwrt-openvpn-up-auth.conf' file on OpenWRT router
+
+      2. A selected password is hashed via SHA256 and written to '/etc/openvpn/scripts/openwrt-openvpn-up-auth.conf' file on OpenWRT router
+
+      3. Upon successful PKI certificate validation and subsequent secure channel establishment to OpenWRT router, the connecting user
+         is presented with a username/password prompt
+
+      4. The information supplied in response to prompt is sent in plain text (over secure channel) and written to temporary file at /tmp
+         (which is mounted to tmpfs volatile memory -- this is a function of the 'auth-user-pass-verify' server directive, not the script)
+
+      5. The username in the temporary file is verified against that found in 'openwrt-openvpn-up-auth.conf'
+
+      6. The password in the temporary file is hashed and verified against the hash found in 'openwrt-openvpn-up-auth.conf'
+
+      7. Validation of both username and password results in successful connection.  Mismatch of either will result in connection failure
+
+      8. In any circumstance, the temporary username/password file is deleted from /tmp
+
+      9. A log of the connection attempt and result is made in '/tmp/openwrt-openvpn-up-auth.log'
+
