@@ -25,23 +25,29 @@
 
 #-- VARIABLES ------------------------------------------------------------------
 
-export EASYRSA_REQ_CN="vpnca"
-export EASYRSA_PKI="/etc/easy-rsa/pki"
-export OPENVPN_BASE_DIR="/etc/openvpn"
-
 script_start_ts="$(date)"
-script_log_file="/root/${0%.*}.log"
+script_start_ts_fmt="$(date --date "${script_start_ts}" +%Y%m%d-%H%M%S)"
+script_log_dir="/root/${0%.*}-log"
+script_log_file="${script_log_dir}/${0%.*}-${script_start_ts_fmt}.log"
+script_bkp_file="${script_log_dir}/${0%.*}-${script_start_ts_fmt}-bkp.tgz"
 
+easyrsa_req_cn="vpnca"
+easyrsa_base_dir="/etc/easy-rsa"
+easyrsa_pki_dir="${easyrsa_base_dir}/pki"
+
+openvpn_base_dir="/etc/openvpn"
 openvpn_status_log="/tmp/openvpn-status.log"
 
-up_auth_script_dir="${OPENVPN_BASE_DIR}/scripts"
+os_conf_dir="/etc/config"
+
+up_auth_script_dir="${openvpn_base_dir}/scripts"
 up_auth_script_name="openwrt-openvpn-up-auth.sh"
 up_auth_script_file="${up_auth_script_dir}/${up_auth_script_name}"
 up_auth_conf_file="${up_auth_script_file%.*}.conf"
 
-client_dirname="openvpn-client"
-client_dirpath="${OPENVPN_BASE_DIR}/${client_dirname}"
-client_config_file="${client_dirpath}/openvpn-client.ovpn"
+client_dir_name="openvpn-client"
+client_dir_path="${openvpn_base_dir}/${client_dir_name}"
+client_conf_file="${client_dir_path}/openvpn-client.ovpn"
 
 #-- FUNCTIONS ------------------------------------------------------------------
 
@@ -49,34 +55,32 @@ request_config_info() {
 
    printf "\n### CONFIGURATION MENU ###\n\n"
 
-   printf "\n"
-
    # request input from user and set defaults if no input provided
-   sleep 1; read -p "Enter VPN client network (default: 10.0.1.0 255.255.255.0): " VPN_NET
-   if [ -z "${VPN_NET}" ]; then VPN_NET="10.0.1.0 255.255.255.0"; fi
+   sleep 1; read -p "Enter VPN client network (default: 10.0.1.0 255.255.255.0): " vpn_net
+   if [ -z "${vpn_net}" ]; then vpn_net="10.0.1.0 255.255.255.0"; fi
 
    # set default vpn dns address
-   DEFAULT_VPN_DNS="1.1.1.1"
+   default_vpn_dns="1.1.1.1"
 
-   sleep 1; read -p "Enter VPN client DNS address (default: ${DEFAULT_VPN_DNS}): " VPN_DNS
-   if [ -z "${VPN_DNS}" ]; then VPN_DNS="${DEFAULT_VPN_DNS}"; fi
+   sleep 1; read -p "Enter VPN client DNS address (default: ${default_vpn_dns}): " vpn_dns
+   if [ -z "${vpn_dns}" ]; then vpn_dns="${default_vpn_dns}"; fi
 
    # get vpn wan ip from existing config
-   DEFAULT_VPN_WAN_IP="$(ifconfig eth1.2 | grep "inet addr" | cut -d: -f2 | cut -d" " -f1)"
+   default_vpn_wan_ip="$(ifconfig eth1.2 | grep "inet addr" | cut -d: -f2 | cut -d" " -f1)"
    
-   sleep 1; read -p "Enter VPN WAN IP address (default: "${DEFAULT_VPN_WAN_IP}"): " VPN_WAN_IP
-   if [ -z "${VPN_WAN_IP}" ]; then VPN_WAN_IP="${DEFAULT_VPN_WAN_IP}"; fi
+   sleep 1; read -p "Enter VPN WAN IP address (default: "${default_vpn_wan_ip}"): " vpn_wan_ip
+   if [ -z "${vpn_wan_ip}" ]; then vpn_wan_ip="${default_vpn_wan_ip}"; fi
 
-   sleep 1; read -p "Enter VPN WAN port (default: "1194"): " VPN_PORT
-   if [ -z "${VPN_PORT}" ]; then VPN_PORT="1194"; fi
+   sleep 1; read -p "Enter VPN WAN port (default: "1194"): " vpn_port
+   if [ -z "${vpn_port}" ]; then vpn_port="1194"; fi
 
    # display and confirm user input
    printf "\nYou entered:\n\n"
 
-   printf "VPN client network: \"${VPN_NET}\"\n"
-   printf "VPN client DNS address: \"${VPN_DNS}\"\n"
-   printf "VPN WAN IP address: \"${VPN_WAN_IP}\"\n"
-   printf "VPN WAN port: \"${VPN_PORT}\"\n\n"
+   printf "VPN client network: \"${vpn_net}\"\n"
+   printf "VPN client DNS address: \"${vpn_dns}\"\n"
+   printf "VPN WAN IP address: \"${vpn_wan_ip}\"\n"
+   printf "VPN WAN port: \"${vpn_port}\"\n\n"
 
    # invoke "confirm_user_input" function with current function name as argument
    confirm_user_input request_config_info
@@ -174,15 +178,26 @@ create_openvpn_certs() {
 
    printf "### CONFIGURE PKI CERTS ###\n\n"
 
-   printf "Creating certificates (should take around 20 minutes)..."
+   printf "Backing up any existing certificates/configuration to:\n"
+   printf "${script_bkp_file}"
+   # backup any existing certificates and configuration
+   tar cpzf "${script_bkp_file}" \
+      "${easyrsa_base_dir}" \
+      "${openvpn_base_dir}" \
+      "${os_conf_dir}"
+
+   printf "\n\n"
+
+   printf "Creating certificates (should take around 20 minutes)...\n\n"
+
    # remove and re-initialize the PKI directory
+   printf "Removing any existing certificates at: ${easyrsa_pki_dir}"
    easyrsa init-pki
 
    printf "\n\n"
  
    # generate DH parameters
-   # batch option removed for log verbosity
-   easyrsa gen-dh
+   easyrsa --batch gen-dh
  
    printf "\n\n"
 
@@ -202,7 +217,7 @@ create_openvpn_certs() {
    printf "\n\n"
 
    # generate TLS PSK
-   openvpn --genkey --secret "${EASYRSA_PKI}/tc.pem"
+   openvpn --genkey --secret "${easyrsa_pki_dir}/tc.pem"
 
    printf "Completed.\n\n"
 
@@ -219,7 +234,7 @@ configure_openvpn_server() {
    uci set firewall.vpn="rule"
    uci set firewall.vpn.name="Allow-OpenVPN"
    uci set firewall.vpn.src="wan"
-   uci set firewall.vpn.dest_port="${VPN_PORT}"
+   uci set firewall.vpn.dest_port="${vpn_port}"
    uci set firewall.vpn.proto="udp"
    uci set firewall.vpn.target="ACCEPT"
    uci commit firewall
@@ -229,18 +244,17 @@ configure_openvpn_server() {
    # set configuration parameters
    vpn_dev="$(uci get firewall.@zone[0].device)"
    vpn_domain="$(uci get dhcp.@dnsmasq[0].domain)"
-   dh_key="$(cat "${EASYRSA_PKI}/dh.pem")"
-   tc_key="$(sed -e "/^#/d;/^\w/N;s/\n//" "${EASYRSA_PKI}/tc.pem")"
-   ca_cert="$(openssl x509 -in "${EASYRSA_PKI}/ca.crt")"
-   newline=$'\n'
+   vpn_dh_key="$(cat "${easyrsa_pki_dir}/dh.pem")"
+   vpn_tc_key="$(sed -e "/^#/d;/^\w/N;s/\n//" "${easyrsa_pki_dir}/tc.pem")"
+   vpn_ca_cert="$(openssl x509 -in "${easyrsa_pki_dir}/ca.crt")"
  
-   grep -l -r -e "TLS Web Server Authentication" "${EASYRSA_PKI}/issued" \
+   grep -l -r -e "TLS Web Server Authentication" "${easyrsa_pki_dir}/issued" \
    | sed -e "s/^.*\///;s/\.\w*$//" \
    | while read vpn_id
    do
    vpn_conf="/etc/openvpn/${vpn_id}.conf"
-   vpn_cert="$(openssl x509 -in "${EASYRSA_PKI}/issued/${vpn_id}.crt")"
-   vpn_key="$(cat "${EASYRSA_PKI}/private/${vpn_id}.key")"
+   vpn_cert="$(openssl x509 -in "${easyrsa_pki_dir}/issued/${vpn_id}.crt")"
+   vpn_key="$(cat "${easyrsa_pki_dir}/private/${vpn_id}.key")"
 
    # create vpn server configuration file (indentation removed for proper file formatting)
    printf "auth RSA-SHA256
@@ -252,24 +266,24 @@ group nogroup
 keepalive 10 120
 persist-key
 persist-tun
-port ${VPN_PORT}
+port ${vpn_port}
 proto udp
-push \"dhcp-option DNS ${VPN_DNS}\"
+push \"dhcp-option DNS ${vpn_dns}\"
 push \"dhcp-option DOMAIN ${vpn_domain}\"
 push \"persist-key\"
 push \"persist-tun\"
 push \"redirect-gateway def1\"
 script-security 2
-server ${VPN_NET}
+server ${vpn_net}
 status ${openvpn_status_log}
 topology subnet
 user nobody
 verb 3
-<dh>\n${dh_key}\n</dh>
-<ca>\n${ca_cert}\n</ca>
+<dh>\n${vpn_dh_key}\n</dh>
+<ca>\n${vpn_ca_cert}\n</ca>
 <cert>\n${vpn_cert}\n</cert>
 <key>\n${vpn_key}\n</key>
-<tls-crypt>\n${tc_key}\n</tls-crypt>
+<tls-crypt>\n${vpn_tc_key}\n</tls-crypt>
 " > "${vpn_conf}"
 
    chmod "400" "${vpn_conf}"
@@ -292,6 +306,9 @@ configure_openvpn_up_auth() {
 # creates an executable script file for use with "auth-user-pass-verify" server directive
 
    printf "### CONFIGURE OPENVPN SERVER USER/PASSWORD AUTH ###\n\n"
+
+   #create required script directory
+   mkdir -p "${up_auth_script_dir}"
 
    printf "Creating user/password authentication script file...\n\n"
    # create script file (indentation removed for proper script formatting)
@@ -367,7 +384,7 @@ configure_openvpn_client() {
 
    printf "### CONFIGURE OPENVPN CLIENT ###\n\n"
 
-   mkdir -p "${client_dirpath}"
+   mkdir -p "${client_dir_path}"
 
    printf "Creating client configuration file...\n\n"
    # create client config file (indentation removed for proper file formatting)
@@ -377,7 +394,7 @@ ca ca.crt
 cert vpnclient.crt
 client
 comp-lzo
-dhcp-option DNS ${VPN_DNS}
+dhcp-option DNS ${vpn_dns}
 dev tun0
 group nobody
 key-direction 1
@@ -387,13 +404,13 @@ persist-key
 persist-tun
 proto udp
 pull
-remote ${VPN_WAN_IP} ${VPN_PORT}
+remote ${vpn_wan_ip} ${vpn_port}
 resolv-retry infinite
 tls-client
 tls-crypt tc.pem 1
 user nobody
 verb 3
-" > "${client_config_file}"
+" > "${client_conf_file}"
 
    printf "Completed.\n\n"
 
@@ -404,24 +421,24 @@ create_openvpn_client_archive() {
    printf "### CREATE OPENVPN CLIENT CONFIGURATION ARCHIVE ###\n\n"
 
    # copy required certs to client dir
-   cp -p "${EASYRSA_PKI}/ca.crt" \
-   "${EASYRSA_PKI}/tc.pem" \
-   "${EASYRSA_PKI}/issued/vpnclient.crt" \
-   "${EASYRSA_PKI}/private/vpnclient.key" "${client_dirpath}/"
+   cp -p "${easyrsa_pki_dir}/ca.crt" \
+   "${easyrsa_pki_dir}/tc.pem" \
+   "${easyrsa_pki_dir}/issued/vpnclient.crt" \
+   "${easyrsa_pki_dir}/private/vpnclient.key" "${client_dir_path}/"
 
    # create client readme
-   printf "Execute command \"sudo openvpn $(basename ${client_config_file})\" from client device to connect to openvpn server.\n" \
-   > ${client_config_file%.*}.readme
+   printf "Execute command \"sudo openvpn $(basename ${client_conf_file})\" from client device to connect to openvpn server.\n" \
+   > ${client_conf_file%.*}.readme
 
    # set client file permissions
-   chmod 400 "${client_dirpath}"/*
+   chmod 400 "${client_dir_path}"/*
 
    printf "Creating client archive file...\n\n"
    # create client archive file
-   client_archive_file="${OPENVPN_BASE_DIR}/${client_dirname}.tgz"
-   cd "${client_dirpath}/.."
-   tar cpzf "${client_archive_file}" "${client_dirname}"
-   rm -rf "${client_dirname}"
+   client_archive_file="${openvpn_base_dir}/${client_dir_name}.tgz"
+   cd "${client_dir_path}/.."
+   tar cpzf "${client_archive_file}" "${client_dir_name}"
+   rm -rf "${client_dir_name}"
    cd - > /dev/null 2>&1
 
    printf "Client archive file created at: "${client_archive_file}"\n"
@@ -434,9 +451,6 @@ create_openvpn_client_archive() {
 #-- MAIN FUNCTION --------------------------------------------------------------
 
 main() {
-
-   #create required script directory
-   mkdir -p "${up_auth_script_dir}"
 
    printf "\n### INSTALLATION MENU ###\n\n"
 
@@ -487,11 +501,22 @@ main() {
    printf "SCRIPT START TIME: ${script_start_ts}\n"
    printf "SCRIPT END TIME: $(date)\n\n"
    printf "SCRIPT LOGFILE: ${script_log_file}\n\n"
+
+   #write system info to log file without terminal display
+   printf "### SYSTEM INFO ###\n\n" >> ${script_log_file}
+   uname -a >>  ${script_log_file}
+   printf "\n" >> ${script_log_file}
+   cat /etc/os-release >> ${script_log_file}
+   printf "\n" >> ${script_log_file}
+
    exit 0
 
 }
 
 #-- EXECUTE --------------------------------------------------------------------
+
+# create required script log directory
+mkdir -p "${script_log_dir}"
 
 # execute main function and log output to file
 main | tee "${script_log_file}"
