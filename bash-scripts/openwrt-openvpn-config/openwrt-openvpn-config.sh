@@ -503,7 +503,8 @@ main() {
    printf "SCRIPT LOGFILE: ${script_log_file}\n\n"
 
    #write system info to log file without terminal display
-   printf "### SYSTEM INFO ###\n\n" >> ${script_log_file}
+   echo "### SYSTEM INFO ###" >> ${script_log_file}
+   printf "\n" >> ${script_log_file}
    uname -a >> ${script_log_file}
    printf "\n" >> ${script_log_file}
    cat /etc/os-release >> ${script_log_file}
