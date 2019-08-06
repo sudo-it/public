@@ -87,7 +87,7 @@ configuration will be required on any substitute device.
 
         configure lan settings as desired, example:
         
-           IPv4 address: 10.0.0.1
+           IPv4 address: 10.0.1.1
            IPv4 netmask: 255.255.255.0
            
         click save and apply, then wait for first 30s countdown to expire, and click 'apply unchecked'
@@ -156,7 +156,7 @@ configuration will be required on any substitute device.
 
         Use putty or another ssh client to establish ssh connection, example:
  
-           ssh root@10.0.0.1
+           ssh root@10.0.1.1
 
    - Verify DNS operation and Internet connectivity:   
 
