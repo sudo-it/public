@@ -196,7 +196,7 @@ create_openvpn_certs() {
 
    # remove and re-initialize the PKI directory
    printf "Removing any existing certificates at: ${easyrsa_pki_dir}"
-   easyrsa init-pki
+   easyrsa --batch init-pki
 
    printf "\n\n"
  
