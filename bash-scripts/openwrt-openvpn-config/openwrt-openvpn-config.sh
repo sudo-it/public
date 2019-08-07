@@ -514,7 +514,7 @@ main() {
 # create required script log directory
 mkdir -p "${script_log_dir}"
 
-#create required openvpn user/pass script directory
+# create required openvpn user/pass script directory
 mkdir -p "${up_auth_script_dir}"
 
 # execute main function and log output to file
