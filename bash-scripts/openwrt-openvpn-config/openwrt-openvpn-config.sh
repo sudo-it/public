@@ -58,24 +58,30 @@ request_config_info() {
 
    printf "\n### CONFIGURATION MENU ###\n\n"
 
+   # set default vpn net
+   default_vpn_net="10.0.1.0 255.255.255.0"
+
    # request input from user and set defaults if no input provided
-   sleep 1; read -p "Enter VPN client network address and mask (default: 10.0.1.0 255.255.255.0): " vpn_net
-   if [ -z "${vpn_net}" ]; then vpn_net="10.0.1.0 255.255.255.0"; fi
+   sleep 1; read -p "Enter VPN client network address and mask (default: "${default_vpn_net}"): " vpn_net
+   if [ -z "${vpn_net}" ]; then vpn_net="${default_vpn_net}"; fi
 
    # set default vpn dns address
    default_vpn_dns="1.1.1.1"
 
-   sleep 1; read -p "Enter VPN client DNS server address (default: ${default_vpn_dns}): " vpn_dns
+   sleep 1; read -p "Enter VPN client DNS server address (default: "${default_vpn_dns}"): " vpn_dns
    if [ -z "${vpn_dns}" ]; then vpn_dns="${default_vpn_dns}"; fi
 
-   # get vpn wan ip from existing config
+   # set default vpn wan ip - query value from existing config
    default_vpn_wan_ip="$(ifconfig eth1.2 | grep "inet addr" | cut -d: -f2 | cut -d" " -f1)"
  
    sleep 1; read -p "Enter VPN WAN IP address (default: "${default_vpn_wan_ip}"): " vpn_wan_ip
    if [ -z "${vpn_wan_ip}" ]; then vpn_wan_ip="${default_vpn_wan_ip}"; fi
 
-   sleep 1; read -p "Enter VPN WAN port (default: "1194"): " vpn_port
-   if [ -z "${vpn_port}" ]; then vpn_port="1194"; fi
+   # set default vpn port
+   default_vpn_port="1194"
+
+   sleep 1; read -p "Enter VPN WAN port (default: "${default_vpn_port}"): " vpn_port
+   if [ -z "${vpn_port}" ]; then vpn_port="${default_vpn_port}"; fi
 
    # display and confirm user input
    printf "\nYou entered:\n\n"
