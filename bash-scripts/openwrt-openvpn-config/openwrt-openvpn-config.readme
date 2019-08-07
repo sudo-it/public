@@ -220,11 +220,6 @@ configuration will be required on any substitute device.
           # Leaves existing certificates in place, but overwrites existing server and client
           # configuration files.
 
-   3 - Generate new certificates (and create new client archive)
-
-          # Leaves existing server and client configurations untouched, overwrites certificates
-          # and creates new client archive (containing new client certificates).
-
 
 ### Explanation of 'openwrt-openvpn-config.sh' script configuration menu prompts ###
 
