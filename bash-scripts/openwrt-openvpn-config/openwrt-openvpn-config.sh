@@ -8,14 +8,14 @@
 #
 # usage: openwrt-openvpn-config.sh
 #
-# description: configures a routed openvpn server with pki certificate & 
+# description: configures a routed openvpn server with pki certificate &
 #              user/password authentication on openwrt
-#              
+#
 # version: 1.0
 # requirements: openvpn-easy-rsa openvpn-openssl
 # bugs:
 # notes: tested hw - Linksys WRT3200ACM
-#        tested os - OpenWrt 18.06.4 r7808-ef686b7292 
+#        tested os - OpenWrt 18.06.4 r7808-ef686b7292
 #                    LuCI openwrt-18.06 branch (git-19.170.32094-4d6d8bc)
 #
 # reference: https://openwrt.org/docs/guide-user/services/vpn/openvpn/basic
@@ -38,7 +38,6 @@ easyrsa_pki_dir="${easyrsa_base_dir}/pki"
 export EASYRSA_PKI="${easyrsa_pki_dir}" #env variable required by easyrsa
 export EASYRSA_REQ_CN="${easyrsa_req_cn}" #env variable required by easyrsa
 
-
 openvpn_base_dir="/etc/openvpn"
 openvpn_status_log="/tmp/openvpn-status.log"
 
@@ -60,18 +59,18 @@ request_config_info() {
    printf "\n### CONFIGURATION MENU ###\n\n"
 
    # request input from user and set defaults if no input provided
-   sleep 1; read -p "Enter VPN client network (default: 10.0.1.0 255.255.255.0): " vpn_net
+   sleep 1; read -p "Enter VPN client network address and mask (default: 10.0.1.0 255.255.255.0): " vpn_net
    if [ -z "${vpn_net}" ]; then vpn_net="10.0.1.0 255.255.255.0"; fi
 
    # set default vpn dns address
    default_vpn_dns="1.1.1.1"
 
-   sleep 1; read -p "Enter VPN client DNS address (default: ${default_vpn_dns}): " vpn_dns
+   sleep 1; read -p "Enter VPN client DNS server address (default: ${default_vpn_dns}): " vpn_dns
    if [ -z "${vpn_dns}" ]; then vpn_dns="${default_vpn_dns}"; fi
 
    # get vpn wan ip from existing config
    default_vpn_wan_ip="$(ifconfig eth1.2 | grep "inet addr" | cut -d: -f2 | cut -d" " -f1)"
-   
+ 
    sleep 1; read -p "Enter VPN WAN IP address (default: "${default_vpn_wan_ip}"): " vpn_wan_ip
    if [ -z "${vpn_wan_ip}" ]; then vpn_wan_ip="${default_vpn_wan_ip}"; fi
 
@@ -101,7 +100,7 @@ request_auth_user_info() {
 
    # display and confirm user input
    printf "\nYou entered: "$auth_user"\n\n"
-   
+ 
    # invoke "confirm_user_input" function with current function name as argument
    confirm_user_input request_auth_user_info
 
@@ -121,17 +120,17 @@ request_auth_passwd_info() {
    # request password 2nd time from user input and set default if none provided
    printf "\nVerify desired password (default: ${default_pass}): "; sleep 1; read -s auth_pass2
    if [ -z "${auth_pass2}" ]; then auth_pass2="${default_pass}"; fi
-   
+ 
    # verify provided passwords match
    if [ "${auth_pass}" != "${auth_pass2}" ]; then
       printf "\n\nPassword mismatch. Try again.\n"
       request_auth_passwd_info
-   else   
+   else 
       # hash password and write to auth config file
       printf "\n\nPassword verified. Proceeding...\n\n"
       printf "${auth_pass}" | sha256sum | cut -d " " -f 1 >> "${up_auth_conf_file}"
    fi
-      
+ 
 }
 
 confirm_user_input() {
@@ -165,6 +164,24 @@ confirm_user_input() {
 
 }
 
+backup_existing_config() {
+
+   printf "### BACKUP EXISTING CONFIG ###\n\n"
+
+   printf "Backing up any existing certificates and configuration to:\n"
+   printf "${script_bkp_file}"
+
+   # backup any existing certificates and configuration
+   tar cpzf "${script_bkp_file}" \
+      "${easyrsa_base_dir}" \
+      "${openvpn_base_dir}" \
+      "${os_conf_dir}" \
+      "${0}" > /dev/null 2>&1
+
+   printf "\n\n"
+
+}
+
 install_required_packages() {
 
    printf "### INSTALL REQUIREMENTS ###\n\n"
@@ -181,16 +198,6 @@ install_required_packages() {
 create_openvpn_certs() {
 
    printf "### CONFIGURE PKI CERTS ###\n\n"
-
-   printf "Backing up any existing certificates/configuration to:\n"
-   printf "${script_bkp_file}"
-   # backup any existing certificates and configuration
-   tar cpzf "${script_bkp_file}" \
-      "${easyrsa_base_dir}" \
-      "${openvpn_base_dir}" \
-      "${os_conf_dir}" > /dev/null 2>&1
-
-   printf "\n\n"
 
    printf "Creating certificates...\n\n"
 
@@ -231,7 +238,7 @@ configure_openvpn_server() {
 
    printf "### CONFIGURE OPENVPN SERVER ###\n\n"
 
-   printf "Configuring Firewall...\n\n"
+   printf "Configuring firewall...\n\n"
    # configure firewall
    uci set firewall.@zone[0].device="tun0"
    uci -q delete firewall.vpn
@@ -244,7 +251,7 @@ configure_openvpn_server() {
    uci commit firewall
    /etc/init.d/firewall restart
 
-   printf "\nConfiguring VPN Server...\n\n"
+   printf "\nConfiguring OpenVPN server...\n\n"
    # set configuration parameters
    vpn_dev="$(uci get firewall.@zone[0].device)"
    vpn_domain="$(uci get dhcp.@dnsmasq[0].domain)"
@@ -256,7 +263,7 @@ configure_openvpn_server() {
    | sed -e "s/^.*\///;s/\.\w*$//" \
    | while read vpn_id
    do
-   vpn_conf="/etc/openvpn/${vpn_id}.conf"
+   vpn_conf="${openvpn_base_dir}/${vpn_id}.conf"
    vpn_cert="$(openssl x509 -in "${easyrsa_pki_dir}/issued/${vpn_id}.crt")"
    vpn_key="$(cat "${easyrsa_pki_dir}/private/${vpn_id}.key")"
 
@@ -290,13 +297,13 @@ verb 3
 <tls-crypt>\n${vpn_tc_key}\n</tls-crypt>
 " > "${vpn_conf}"
 
+   printf "OpenVPN server configuration file written to: ${vpn_conf}\n\n"
+
    chmod "400" "${vpn_conf}"
 
    done
 
-   printf "OpenVPN server configuration file written to: ${vpn_conf}\n\n"
-
-   printf "Restarting openvpn service...\n\n"
+   printf "Restarting OpenVPN service...\n\n"
    # restart openvpn service
    /etc/init.d/openvpn restart
 
@@ -311,7 +318,7 @@ configure_openvpn_up_auth() {
 
    printf "### CONFIGURE OPENVPN SERVER USER/PASSWORD AUTH ###\n\n"
 
-   printf "Creating user/password authentication script file...\n\n"
+   printf "Creating OpenVPN user/password authentication script file...\n\n"
    # create script file (indentation removed for proper script formatting)
    printf "%s\n" '#!/bin/ash
 # description: provides username/password authentication for openvpn
@@ -355,9 +362,9 @@ fi
 
    # set script permissions
    chmod 555 "${up_auth_script_file}"
-   
+ 
    printf "OpenVPN user/password authentication script written to: ${up_auth_script_file}\n\n"
-   printf "OpenVPN user/password authentication log located: /tmp/${up_auth_script_name%.*}.log\n\n" 
+   printf "OpenVPN user/password authentication log located: /tmp/${up_auth_script_name%.*}.log\n\n"
 
    printf "Completed.\n\n"
 
@@ -369,7 +376,7 @@ configure_openvpn_client() {
 
    mkdir -p "${client_dir_path}"
 
-   printf "Creating client configuration file...\n\n"
+   printf "Creating OpenVPN client configuration file...\n\n"
    # create client config file (indentation removed for proper file formatting)
    printf "auth RSA-SHA256
 auth-user-pass
@@ -395,6 +402,12 @@ user nobody
 verb 3
 " > "${client_conf_file}"
 
+   # create client readme
+   printf "Execute command \"sudo openvpn $(basename ${client_conf_file})\" from client device to connect to openvpn server.\n" \
+   > ${client_conf_file%.*}.readme
+
+   printf "OpenVPN client configuration file written to: ${client_conf_file}\n\n"
+
    printf "Completed.\n\n"
 
 }
@@ -409,25 +422,30 @@ create_openvpn_client_archive() {
    "${easyrsa_pki_dir}/issued/vpnclient.crt" \
    "${easyrsa_pki_dir}/private/vpnclient.key" "${client_dir_path}/"
 
-   # create client readme
-   printf "Execute command \"sudo openvpn $(basename ${client_conf_file})\" from client device to connect to openvpn server.\n" \
-   > ${client_conf_file%.*}.readme
-
    # set client file permissions
    chmod 400 "${client_dir_path}"/*
 
-   printf "Creating client archive file...\n\n"
+   printf "Creating OpenVPN client archive file...\n\n"
    # create client archive file
    client_archive_file="${openvpn_base_dir}/${client_dir_name}.tgz"
    cd "${client_dir_path}/.."
    tar cpzf "${client_archive_file}" "${client_dir_name}"
-   rm -rf "${client_dir_name}"
    cd - > /dev/null 2>&1
 
-   printf "Client archive file created at: "${client_archive_file}"\n"
+   printf "OpenVPN client archive file created at: "${client_archive_file}"\n"
    printf "*Securely* copy (e.g. scp) and extract this file to client device.\n\n"
 
    printf "Completed.\n\n"
+
+}
+
+print_system_info() {
+
+   printf "### SYSTEM INFO ###\n\n"
+   uname -a
+   printf "\n"
+   cat /etc/os-release
+   printf "\n\n"
 
 }
 
@@ -453,6 +471,7 @@ main() {
       request_config_info
       request_auth_user_info
       request_auth_passwd_info
+      backup_existing_config
       install_required_packages
       create_openvpn_certs
       configure_openvpn_server
@@ -464,12 +483,14 @@ main() {
       request_config_info
       request_auth_user_info
       request_auth_passwd_info
+      backup_existing_config
       configure_openvpn_server
       configure_openvpn_up_auth
       configure_openvpn_client
       create_openvpn_client_archive
       ;;
    3)
+      backup_existing_config
       create_openvpn_certs
       create_openvpn_client_archive
       ;;
@@ -484,13 +505,6 @@ main() {
    printf "SCRIPT END TIME: $(date +"%Y-%m-%d %H:%M:%S")\n\n"
    printf "SCRIPT LOGFILE: ${script_log_file}\n\n"
 
-   #write system info to log file without terminal display
-   echo "### SYSTEM INFO ###" >> ${script_log_file}
-   printf "\n" >> ${script_log_file}
-   uname -a >> ${script_log_file}
-   printf "\n" >> ${script_log_file}
-   cat /etc/os-release >> ${script_log_file}
-   printf "\n" >> ${script_log_file}
 
    exit 0
 
@@ -505,4 +519,7 @@ mkdir -p "${script_log_dir}"
 mkdir -p "${up_auth_script_dir}"
 
 # execute main function and log output to file
-main | tee "${script_log_file}"
+main 2>&1 | tee "${script_log_file}"
+
+# append system info to log file without terminal display
+print_system_info >> ${script_log_file}
