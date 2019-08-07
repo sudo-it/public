@@ -229,7 +229,7 @@ configuration will be required on any substitute device.
 ### Explanation of 'openwrt-openvpn-config.sh' script configuration menu prompts ###
 
 
-   Enter VPN client network (default: 10.0.1.0 255.255.255.0):
+   Enter VPN client network address and mask (default: 10.0.1.0 255.255.255.0):
 
       # This is the network address and subnet mask of the network you wish to use
       # for connected VPN clients.  This network must differ from your internal network.
@@ -237,7 +237,7 @@ configuration will be required on any substitute device.
       # the default example and enter network address and subnet mask separated with a single
       # space. Blank entry accepts default.
 
-   Enter VPN client DNS address (default: 1.1.1.1): 
+   Enter VPN client DNS server address (default: 1.1.1.1): 
 
       # This is a DNS address to be used by VPN clients.  It is pushed as a DHCP option,
       # and will possibly be ignored and/or unnecessary if the OS of VPN client is already
