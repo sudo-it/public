@@ -463,8 +463,7 @@ main() {
 
    printf "1 - New installation (complete)\n"
    printf "2 - Reconfigure existing installation (leave previously generated certificates alone)\n"
-   printf "3 - Generate new certificates (and create new client archive)\n\n"
-
+   
    sleep 1; read -p "Please make a selection: " select
 
    printf "\nYou selected: "${select}"\n\n"
@@ -493,11 +492,6 @@ main() {
       configure_openvpn_server
       configure_openvpn_up_auth
       configure_openvpn_client
-      create_openvpn_client_archive
-      ;;
-   3)
-      backup_existing_config
-      create_openvpn_certs
       create_openvpn_client_archive
       ;;
    *)
