@@ -462,7 +462,7 @@ main() {
    printf "\n### INSTALLATION MENU ###\n\n"
 
    printf "1 - New installation (complete)\n"
-   printf "2 - Reconfigure existing installation (leave previously generated certificates alone)\n"
+   printf "2 - Reconfigure existing installation (leave previously generated certificates alone)\n\n"
    
    sleep 1; read -p "Please make a selection: " select
 
