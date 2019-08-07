@@ -95,7 +95,8 @@ configuration will be required on any substitute device.
           example: disconnect and reconnect lan cable during countdown and/or restart router
         * if tire of this, a simpler method might be to:
              ssh root@192.168.1.1
-             vim /etc/config/network #change IP found under section labeled "config interface 'lan'"
+             cp -p /etc/config/network /etc/config/network.orig ## create backup of network config
+             vim /etc/config/network ## change IP found under section labeled "config interface 'lan'"
              reboot
 
    - *Optional* Customize WAN network interface:
