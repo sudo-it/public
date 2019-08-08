@@ -58,10 +58,11 @@ request_config_info() {
 
    printf "\n### CONFIGURATION MENU ###\n\n"
 
+   # request input from user and set defaults if no input provided
+   
    # set default vpn net
    default_vpn_net="10.0.1.0 255.255.255.0"
 
-   # request input from user and set defaults if no input provided
    sleep 1; read -p "Enter VPN client network address and mask (default: ${default_vpn_net}): " vpn_net
    if [ -z "${vpn_net}" ]; then vpn_net="${default_vpn_net}"; fi
 
@@ -71,8 +72,12 @@ request_config_info() {
    sleep 1; read -p "Enter VPN client DNS server address (default: ${default_vpn_dns}): " vpn_dns
    if [ -z "${vpn_dns}" ]; then vpn_dns="${default_vpn_dns}"; fi
 
-   # set default vpn wan ip - query value from existing config
-   default_vpn_wan_ip="$(ifconfig eth1.2 | grep "inet addr" | cut -d: -f2 | cut -d" " -f1)"
+   # set wan interface name
+   vpn_if_name="wan"
+   # get matching interface section from network config file, search for ifname option, cut all but device name from output
+   vpn_if_dev_name="$(sed -n "/^config interface '${vpn_if_name}'/,/^config/p"  /etc/config/network | grep "option ifname" | cut -d"'" -f2)"
+   # set default vpn wan ip - use ifconfig output to find ip
+   default_vpn_wan_ip="$(ifconfig ${vpn_if_dev_name} | grep "inet addr" | cut -d: -f2 | cut -d" " -f1)"
  
    sleep 1; read -p "Enter VPN WAN IP address (default: ${default_vpn_wan_ip}): " vpn_wan_ip
    if [ -z "${vpn_wan_ip}" ]; then vpn_wan_ip="${default_vpn_wan_ip}"; fi
@@ -250,7 +255,7 @@ configure_openvpn_server() {
    uci -q delete firewall.vpn
    uci set firewall.vpn="rule"
    uci set firewall.vpn.name="Allow-OpenVPN"
-   uci set firewall.vpn.src="wan"
+   uci set firewall.vpn.src="${vpn_if_name}"
    uci set firewall.vpn.dest_port="${vpn_port}"
    uci set firewall.vpn.proto="udp"
    uci set firewall.vpn.target="ACCEPT"
