@@ -5,7 +5,7 @@ The intent of the 'openwrt-openvpn-config.sh' script is to ease the process of e
 
 To be clear, execution of this script will result in a routed OpenVPN server running on an OpenWRT router for purpose 
 of remotely accessing from the Internet (WAN/external side), via encrypted tunnel, the network behind the OpenVPN server/router
-(LAN/external side).
+(LAN/internal side).
 
 At time of script creation, OpenWRT's implementation of OpenVPN provides no mechanism of VPN security other than
 PKI certificate.  I wanted to use two-factor authentication, establishing both PKI certificate validation as well
