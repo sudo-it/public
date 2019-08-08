@@ -1,13 +1,14 @@
 #20190728 - SIT
 
 
-The intent of the 'openwrt-openvpn-config.sh' script is to ease the process of establishing an OpenVPN server on OpenWRT.
+The intent of the 'openwrt-openvpn-server-basic-2fa-config.sh' script is to ease the process of establishing an OpenVPN server
+with basic two-factor authentication (2FA) on OpenWrt.
 
-To be clear, execution of this script will result in a routed OpenVPN server running on an OpenWRT router for purpose 
+To be clear, execution of this script will result in a routed OpenVPN server running on an OpenWrt router for purpose 
 of remotely accessing from the Internet (WAN/external side), via encrypted tunnel, the network behind the OpenVPN server/router
 (LAN/internal side).
 
-At time of script creation, OpenWRT's implementation of OpenVPN provides no mechanism of VPN security other than
+At time of script creation, OpenWrt's implementation of OpenVPN provides no mechanism of VPN security other than
 PKI certificate.  I wanted to use two-factor authentication, establishing both PKI certificate validation as well
 as user/password authentication.  
 
@@ -56,7 +57,7 @@ configuration will be required on any substitute device.
         after router reboots, re-establish connection to http://192.168.1.1
 
 
-### Instructions for initial configuration of OpenWRT (required for proper execution of 'openwrt-openvpn-config.sh' script) ###
+### Instructions for initial configuration of OpenWrt (required for proper execution of 'openwrt-openvpn-config.sh' script) ###
 
 
    * Requires PC connected via network cable to LAN/Ethernet port of router with functional Internet access:
@@ -194,20 +195,20 @@ configuration will be required on any substitute device.
 
         opkg update; opkg install libustream-openssl ca-bundle ca-certificates
 
-   - Use wget to download 'openwrt-openvpn-config.sh' script
+   - Use wget to download 'openwrt-openvpn-server-basic-2fa-config' script
 
-        wget https://raw.githubusercontent.com/sudo-it/code/master/bash-scripts/openwrt-openvpn-config/openwrt-openvpn-config.sh
+        wget https://raw.githubusercontent.com/sudo-it/public/master/scripts/openwrt-openvpn-server-basic-2fa-config/openwrt-openvpn-server-basic-2fa-config.sh
 
    - Set execute permissions on script
 
-        chmod 500 openwrt-openvpn-config.sh 
+        chmod 500 openwrt-openvpn-server-basic-2fa-config.sh 
 
    - Execute script
 
-        ./openwrt-openvpn-config.sh
+        ./openwrt-openvpn-server-basic-2fa-config.sh
 
 
-### Explanation of 'openwrt-openvpn-config.sh' script installation menu prompts ###
+### Explanation of 'openwrt-openvpn-server-basic-2fa-config.sh' script installation menu prompts ###
 
 
    1 - New installation (complete)
@@ -222,7 +223,7 @@ configuration will be required on any substitute device.
           # configuration files.
 
 
-### Explanation of 'openwrt-openvpn-config.sh' script configuration menu prompts ###
+### Explanation of 'openwrt-openvpn-server-basic-2fa-config.sh' script configuration menu prompts ###
 
 
    Enter VPN client network address and mask (default: 10.0.1.0 255.255.255.0):
@@ -268,7 +269,7 @@ configuration will be required on any substitute device.
 
    * Requires OpenVPN installation on client device
 
-   - Upon completion of 'openwrt-openvpn-config.sh' script, a client file archive will be found at:
+   - Upon completion of 'openwrt-openvpn-server-basic-2fa-config.sh' script, a client file archive will be found at:
 
       /etc/openvpn/openvpn-client.tgz
 
@@ -290,7 +291,7 @@ configuration will be required on any substitute device.
 ### Additional notes ###
 
 
-   - To revert from OpenVPN to stock Linksys WRT3200ACM firmware:
+   - To revert from OpenWrt to stock Linksys WRT3200ACM firmware:
 
       Download Linksys firmware to router:
 
@@ -309,7 +310,7 @@ configuration will be required on any substitute device.
             Connection to 10.0.0.1 closed by remote host.
             Connection to 10.0.0.1 closed.
 
-   - To restore OpenWRT factory defaults (erasing any/all non-stock files and configurations)
+   - To restore OpenWrt factory defaults (erasing any/all non-stock files and configurations)
 
       firstboot; reboot
 
