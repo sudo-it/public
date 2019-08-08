@@ -4,9 +4,9 @@
 #
 # SIT-20190803
 #
-# file: openwrt-openvpn-config.sh
+# file: openwrt-openvpn-server-basic-2fa-config.sh
 #
-# usage: openwrt-openvpn-config.sh
+# usage: openwrt-openvpn-server-basic-2fa-config.sh
 #
 # description: configures a routed openvpn server with pki certificate &
 #              user/password authentication on openwrt
