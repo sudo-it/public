@@ -4,8 +4,8 @@
 The intent of the 'openwrt-openvpn-config.sh' script is to ease the process of establishing an OpenVPN server on OpenWRT.
 
 To be clear, execution of this script will result in a routed OpenVPN server running on an OpenWRT router for purpose 
-of remotely accessing from the Internet (external side), via encrypted tunnel, the network behind the OpenVPN server/router
-(internal/LAN side).
+of remotely accessing from the Internet (WAN/external side), via encrypted tunnel, the network behind the OpenVPN server/router
+(LAN/external side).
 
 At time of script creation, OpenWRT's implementation of OpenVPN provides no mechanism of VPN security other than
 PKI certificate.  I wanted to use two-factor authentication, establishing both PKI certificate validation as well
@@ -228,8 +228,8 @@ configuration will be required on any substitute device.
    Enter VPN client network address and mask (default: 10.0.1.0 255.255.255.0):
 
       # This is the network address and subnet mask of the network you wish to use
-      # for connected VPN clients.  This network must differ from your internal network.
-      # The first usable IP will be assigned to the router interface. Ensure you follow
+      # for connected VPN clients.  This network must differ from your LAN/internal network.
+      # The first usable IP will be assigned to the router tunnel interface. Ensure you follow
       # the default example and enter network address and subnet mask separated with a single
       # space. Blank entry accepts default.
 
@@ -242,10 +242,10 @@ configuration will be required on any substitute device.
       
    Enter VPN WAN IP address (default: 192.168.1.2): 
 
-      # This is the external/Internet/WAN IP address of the router.  The default is derived by
-      # querying the IP of the eth1.2 interface ('Internet' interface).  With Internet interface
-      # configured in advance via DHCP or static -- static definitely advised -- the default 
-      # detected IP should be correct. Blank entry accepts default.
+      # This is the external/Internet/WAN IP address of the router.  The default will vary as it
+      # is derived by querying the IP of the WAN interface.  With WAN interface configured in
+      # advance via DHCP or static -- static definitely advised -- the default detected IP should
+      # be correct. Blank entry accepts default.
 
    Enter VPN WAN port (default: 1194):
 
