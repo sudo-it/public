@@ -507,8 +507,8 @@ main() {
 
    printf "### SCRIPT COMPLETED ###\n\n"
    printf "SCRIPT START TIME: ${script_start_ts}\n"
-   printf "SCRIPT END TIME: $(date +"%Y-%m-%d %H:%M:%S")\n\n"
-   printf "SCRIPT LOGFILE:   ${script_log_file}\n\n"
+   printf "SCRIPT END TIME:   $(date +"%Y-%m-%d %H:%M:%S")\n\n"
+   printf "SCRIPT LOGFILE: ${script_log_file}\n\n"
 
    exit 0
 
