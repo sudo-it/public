@@ -49,7 +49,7 @@ func_prereq() {
 
       printf "\n\tERROR: Unable to access required files:\n"
       printf "\t\t${ts_file}\n"
-      printf "\t\t${ts_timing_file}\n"
+      printf "\t\t${ts_timing_file}\n\n"
       exit 1
 
    fi
