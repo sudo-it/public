@@ -133,7 +133,7 @@ func_exit() {
 
 # call functions
 
-# if invoked with argument
+# if main script invoked with argument
 if [ -n "${1}" ]; then
     if [ "${1}" = "-h" ]  || [ "${1}" = "-help" ]  || [ "${1}" = "--help" ]; then
         func_print_help
@@ -148,7 +148,7 @@ func_runonce
 
 func_prereq
 
-# define script command
+# define 'script' command
 script_cmd="script "${script_cmd_vars}" --flush --timing="${ts_timing_file}" "${ts_file}""
 
 # execute script_cmd
