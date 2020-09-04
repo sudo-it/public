@@ -63,7 +63,7 @@ func_print_help() {
    printf "
 
    \e[4mtermlogger.sh\e[0m records all terminal session activity to ${output_dir}.
-   it is useful any time you wish to record your screen activity, and can be
+   it is useful any time you wish to record your terminal activity, and can be
    made to execute automatically via $HOME/.bashrc, or similar.
    to replay a saved session, use 'scriptreplay'.\n
    e.g.: scriptreplay -t "${ts_timing_file}" "${ts_file}"
