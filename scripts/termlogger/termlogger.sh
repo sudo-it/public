@@ -104,7 +104,7 @@ func_exit() {
 
     unset termlogger_runonce
 
-    # if compress enabled and #ts_file exists, compress output files
+    # if compress enabled and $ts_file exists, compress output files
     if [ "${enable_compress}" == "yes" ] && [ -f "${ts_file}" ]; then
 	    tar cpzf "${tgz_file}" --remove-files -C "${output_dir}" \
 		         "$(basename ${ts_timing_file})" \
@@ -116,18 +116,22 @@ func_exit() {
     # if $ts_file or $tgz_file exist (will only exist if 'script_cmd' has been executed)
     # ...prevents displaying log output with 'help' message
     if [ -f "${ts_file}" ] || [ -f "${tgz_file}" ]; then
-	# if quiet option enabled
+        # if quiet option enabled
         if [ "${enable_quiet}" != "yes" ]; then
             # if compress option enabled
             if [ "${enable_compress}" == "yes" ]; then
-                printf "\n\n   Log file written to: ${tgz_file}\n\n"
+                printf "
+                        Log file written to: ${tgz_file}\n\n"
             else
-	        printf "\n\n   Log files written to: ${ts_file}\n\t\t\t ${ts_timing_file}\n\n"
-	    fi
+                printf "
+                        Log files written to: ${ts_file}
+                                              ${ts_timing_file}\n\n"
+            fi
         fi
     fi
 
 }
+
 
 ### MAIN ###
 
