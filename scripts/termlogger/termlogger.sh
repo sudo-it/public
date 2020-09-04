@@ -6,7 +6,7 @@
 
 ### GENERAL VARS ###
 
-enable_quiet=no # yes/no - suprress script logging messages
+enable_quiet=no # yes/no - suppress script logging messages
 enable_compress=yes # yes/no - compress output files on exit
 
 ### ADVANCED VARS ###
