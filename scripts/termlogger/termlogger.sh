@@ -60,24 +60,24 @@ func_prereq() {
 func_print_help() {
 # print help message
 
-   echo "
+   printf "
 
-   termlogger.sh records all terminal session activity to ${output_dir}.
-   it is intended to be invoked automatically via $HOME/.bashrc, or similar.
+   \e[4mtermlogger.sh\e[0m records all terminal session activity to ${output_dir}.
+   it is useful any time you wish to record your screen activity, and can be
+   made to execute automatically via $HOME/.bashrc, or similar.
    to replay a saved session, use 'scriptreplay'.
 
-   e.g.: scriptreplay -t \"$ts_timing_file\" \"$ts_file\"
-   
-   "
+   e.g.: scriptreplay -t "${ts_timing_file}" "${ts_file}"
+   \n"
 
 }
 
 func_print_usage() {
 # print usage message
 
-   echo "
+   printf "
 
-   USAGE: $0 --help
+   USAGE: ${0} --help
 
    "
 
