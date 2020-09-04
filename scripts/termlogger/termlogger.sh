@@ -77,9 +77,7 @@ func_print_usage() {
 
    printf "
 
-   USAGE: ${0} --help
-
-   "
+   USAGE: ${0} --help\n\n"
 
 }
 
