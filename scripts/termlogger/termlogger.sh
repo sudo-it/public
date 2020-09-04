@@ -47,7 +47,7 @@ func_prereq() {
    # verify required files exist
    if [ ! -f "${ts_file}" ] || [ ! -f "${ts_timing_file}" ]; then
 
-      printf "\tERROR: Unable to access required files:\n"
+      printf "\n\tERROR: Unable to access required files:\n"
       printf "\t\t${ts_file}\n"
       printf "\t\t${ts_timing_file}"
 
@@ -118,7 +118,7 @@ func_exit() {
             if [ "${enable_compress}" == "yes" ]; then
                 printf "\tLog file written to: ${tgz_file}\n\n"
             else
-                printf "\tLog files written to:\n"
+                printf "\n\tLog files written to:\n"
 		printf "\t\t${ts_file}\n"
 		printf "\t\t${ts_timing_file}\n\n"
             fi
