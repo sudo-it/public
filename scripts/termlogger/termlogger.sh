@@ -83,7 +83,7 @@ func_runonce() {
 # ensure this is the first run, exit if not true
 # prevents script loop when initiated within subshell
 
-   if [ -v termlogger_runonce ]; then
+   if [ "${termlogger_runonce}" == "1" ]; then
       exit 1;
    else
       export termlogger_runonce="1"
