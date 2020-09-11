@@ -10,21 +10,21 @@
 ### USER OPTIONS ###
 
 enable_quiet=no # yes/no - suppress script logging messages
-enable_compress=yes # yes/no - compress output files on exit
+enable_compress=yes # yes/no - compress output files
 
 ### ADVANCED VARS ###
 
-x="$(date --rfc-3339=ns)" # preload dtstamp including nanoseconds
+x="$(date --rfc-3339=ns)" # date including nanoseconds
 dtstamp="${x}"
-dtstamp_fmt1="$(date --date "$dtstamp" +%Y%m%d.%H%M%S.%N)"
-dtstamp_fmt2="$(date --date "$dtstamp" +%Y%m)"
-
-filename="$(hostname).$(whoami).${dtstamp_fmt1}"
+dtstamp_fmt1="$(date --date "$dtstamp" +%Y%m%d.%H%M%S.%N)" # date format1
+dtstamp_fmt2="$(date --date "$dtstamp" +%Y%m)" # date format2
 
 output_dir="${HOME}/.termlogger"
-tgz_file="${output_dir}/${filename}.tgz"
-ts_file="${output_dir}/${filename}.ts"
-ts_timing_file="${output_dir}/${filename}.ts-timing"
+output_filename="$(hostname).$(whoami).${dtstamp_fmt1}"
+
+tgz_file="${output_dir}/${output_filename}.tgz"
+ts_file="${output_dir}/${output_filename}.ts"
+ts_timing_file="${output_dir}/${output_filename}.ts-timing"
 
 ### TRAPS ###
 
@@ -36,7 +36,7 @@ trap "func_exit" EXIT
 func_prereq() {
 # script prerequisites
 
-   # set script_cmd_vars as indicated above
+   # set script_cmd_vars as indicated by user options
    if [ "${enable_quiet}" = "yes" ]; then
       export script_cmd_vars="-q "
    fi
