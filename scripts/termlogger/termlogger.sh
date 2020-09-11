@@ -1,10 +1,13 @@
 #!/bin/bash
 # SIT-20200822
+#
 # name: termlogger.sh
 # description: termlogger.sh records all terminal session activity.
 #              see "termlogger.sh --help" for more info.
+# notes: written for rhel7 and above.
+#        (rhel6 '/usr/bin/script' does not support "--timing" option)
 
-### GENERAL VARS ###
+### USER OPTIONS ###
 
 enable_quiet=no # yes/no - suppress script logging messages
 enable_compress=yes # yes/no - compress output files on exit
@@ -25,7 +28,7 @@ ts_timing_file="${output_dir}/${filename}.ts-timing"
 
 ### TRAPS ###
 
-# remove the termlogger_runonce variable on exit
+# trap exit signal and call func_exit
 trap "func_exit" EXIT
 
 ### FUNCTIONS ###
@@ -94,9 +97,10 @@ func_runonce() {
 func_exit() {
 # actions to complete on script exit
 
+    # ensure termlogger_runonce variable is cleared
     unset termlogger_runonce
 
-    # if compress enabled and $ts_file exists, compress output files
+    # if compress enabled and $ts_file exists, archive and compress output files
     if [ "${enable_compress}" == "yes" ] && [ -f "${ts_file}" ]; then
 	    tar cpzf "${tgz_file}" --remove-files -C "${output_dir}" \
 		         "$(basename ${ts_timing_file})" \
@@ -123,24 +127,26 @@ func_exit() {
 
 }
 
-
 ### MAIN ###
-
-# call functions
 
 # if main script invoked with argument
 if [ -n "${1}" ]; then
+    # if argument is 'help'
     if [ "${1}" = "-h" ]  || [ "${1}" = "-help" ]  || [ "${1}" = "--help" ]; then
+        # call print_help function and exit
         func_print_help
         exit 0
     else
+        # otherwise call print_usage function and exit
         func_print_usage
         exit 1
     fi
 fi
 
+# call runonce function
 func_runonce
 
+# call prereq funtion
 func_prereq
 
 # define 'script' command
@@ -149,5 +155,5 @@ script_cmd="script "${script_cmd_vars}" --flush --timing="${ts_timing_file}" "${
 # execute script_cmd
 ${script_cmd}
 
-#exit
+# exit script
 exit 0
