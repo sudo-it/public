@@ -21,8 +21,9 @@
 
 #-- VARIABLES ------------------------------------------------------------------
 
-script_start_timestamp="$(date)"
-script_start_timestamp_formatted="$(date +%Y%m%d-%H%M%S)"
+x="$(date)"
+script_start_timestamp="${x}"
+script_start_timestamp_formatted="$(date --date "${script_start_timestamp}" +%Y%m%dT%H%M%S)"
 
 script_name="$(basename $0)"
 script_name_formatted="$(basename $0 .sh)" #remove .sh suffix
